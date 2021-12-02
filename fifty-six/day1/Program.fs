@@ -1,7 +1,7 @@
 open System.IO
 
 let parse () =
-    File.ReadAllLines "../../input/day1.txt"
+    File.ReadAllLines "../input/day1.txt"
     |> Seq.map (fun x -> x.Trim())
     |> Seq.map int
     
