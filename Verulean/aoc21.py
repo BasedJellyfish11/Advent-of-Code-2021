@@ -7,13 +7,16 @@ class AdventSolution:
         with open(path, 'r') as f:
             return [cast_type(i) for i in f.readlines()]
     
-    def input(self, n=dt.today().day, input_dir="input/", cast_type=str):
+    def input(self, n, input_dir="input/", cast_type=str):
         return self.read_file(f"{input_dir}{n}.txt", cast_type=cast_type)
     
     def solve(self, n=dt.today().day):
+        # ================================================================== #
+        # ===                           DAY 01                           === #
+        # ================================================================== #
         if n == 1:
             # Part 1
-            nums = np.array(self.input(cast_type=int))
+            nums = np.array(self.input(n, cast_type=int))
             ans_a = np.count_nonzero(nums[1:] > nums[:-1])
             
             # Part 2
@@ -23,8 +26,11 @@ class AdventSolution:
             return ans_a, ans_b
         
         
+        # ================================================================== #
+        # ===                           DAY 02                           === #
+        # ================================================================== #
         elif n == 2:
-            instructions = self.input()
+            instructions = self.input(n)
             
             # Part 1
             class SubmarinePosition:
@@ -33,7 +39,12 @@ class AdventSolution:
                     self.horiz_pos = 0
                     self.aim = 0
                 
-                def move(self, i):
+                def execute(self, instruction_set: list):
+                    for i in instruction_set:
+                        self.move(i)
+                    return self.depth * self.horiz_pos
+                
+                def move(self, i: str):
                     direction, X = i.split()
                     X = int(X)
                     
@@ -43,11 +54,6 @@ class AdventSolution:
                         self.depth -= X
                     elif direction == 'down':
                         self.depth += X
-                
-                def execute(self, instruction_set):
-                    for i in instruction_set:
-                        self.move(i)
-                    return self.depth * self.horiz_pos
 
             # Part 2
             class NewSubmarinePosition(SubmarinePosition):
@@ -55,7 +61,7 @@ class AdventSolution:
                     super().__init__()
                     self.aim = 0
                 
-                def move(self, i):
+                def move(self, i: str):
                     direction, X = i.split()
                     X = int(X)
                     
@@ -71,6 +77,9 @@ class AdventSolution:
                    NewSubmarinePosition().execute(instructions)
         
         
+        # ================================================================== #
+        # ===                           DAY 03                           === #
+        # ================================================================== #
         elif n == 3:
             # Part 1
             
