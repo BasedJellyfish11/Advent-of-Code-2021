@@ -1,7 +1,7 @@
 from read_inputs import readFromFile
 fileName = "d2_inputs.txt"
 fileName = "real_inputs2.txt"
-
+ 
 class Submarine:
     def __init__(self):
         self._depth = 0
