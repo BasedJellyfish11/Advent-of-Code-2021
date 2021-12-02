@@ -1,5 +1,5 @@
-dir = "pest/day1/"
-#fileName = "inputs.txt"
+dir = "pest/day1/inputs/"
+fileName = "inputs.txt"
 fileName = "real_inputs.txt"
 
 def readFromFile(name):
@@ -13,8 +13,12 @@ def main():
     total = 0
     numbers = readFromFile(dir + fileName)
 
-    for a,b in zip(numbers, numbers[1:]):
+    a = numbers[0] + numbers[1] + numbers[2]
+
+    for x, y, z in zip(numbers[1:], numbers[2:], numbers[3:]):
+        b = x + y + z
         total += 1 if b > a else 0
+        a = b
 
     print(total)
 
