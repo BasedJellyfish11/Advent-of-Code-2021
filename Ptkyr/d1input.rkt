@@ -1,3 +1,9 @@
+;; The first three lines of this file were inserted by DrRacket. They record metadata
+;; about the language level of this file in a form that our tools can easily process.
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname d1input) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor mixed-fraction #f #t none #f () #t)))
+(require "provide.rkt")
+(provide input)
+
 (define input
   (list 103
         112
@@ -1999,20 +2005,3 @@
         6737
         6741
         6740))
-
-(define comp (append (rest input) (list 0))) ; lmao
-
-;; (count-ups one two) produces how many elements of one are
-;;   greater than the corresponding element of two
-;; count-ups: (listof Num) (listof Num) -> Nat
-(define (count-ups one two)
-  (foldr (lambda (x y rror) 
-           (cond
-             [(> x y)
-              (+ 1 rror)]
-             [else
-              rror]))
-         0 two one))
-
-;; Answer
-(check-expect (count-ups input comp) 1482)
