@@ -13,12 +13,9 @@ def main():
     total = 0
     numbers = readFromFile(dir + fileName)
 
-    a = numbers[0] + numbers[1] + numbers[2]
+    for a,b in zip(numbers, numbers[1:]):
 
-    for x, y, z in zip(numbers[1:], numbers[2:], numbers[3:]):
-        b = x + y + z
         total += 1 if b > a else 0
-        a = b
 
     print(total)
 
