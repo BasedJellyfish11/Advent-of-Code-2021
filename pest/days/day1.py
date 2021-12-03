@@ -1,10 +1,10 @@
-from read_inputs import readFromFile
+from read_inputs import read_file
 fileName = "d1_inputs.txt"
 fileName = "real_inputs1.txt"
 
 def main():
     total = 0
-    numbers = readFromFile(fileName)        # returns list of contents of file as strings
+    numbers = read_file(fileName)        # returns list of contents of file as strings
     numbers = list(map(int, numbers))       # cast all to ints from strings
 
     for a,b in zip(numbers, numbers[1:]):   # compare subsequent indices
