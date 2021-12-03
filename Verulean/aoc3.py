@@ -17,8 +17,7 @@ def least_common(x: np.ndarray):
 def filter_report(f, x):
     i = 0
     while len(x) > 1:
-        c = f(x)[i]
-        x = x[x[:,i] == c]
+        x = x[x[:,i] == f(x)[i]]
         i += 1
     return to_decimal(x[0])
 
