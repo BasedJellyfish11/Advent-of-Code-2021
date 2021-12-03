@@ -10,6 +10,8 @@ public class day1
 	
   public static ArrayList<Integer> yea = new ArrayList<Integer>();
   public static int count; 
+  public static int second; 
+  public static int first; 
   
   public static void main(String[] args) {
     try {
@@ -26,11 +28,23 @@ public class day1
     }
     
     for(int i = 0; i < yea.size(); i++)
-    {
-        if(i == yea.size() - 1)
-        break;  //pepodab
+    { 
+    	
+    	//part 2
+        /*if(i == yea.size() - 3)
+        break;  
         
-    	if(yea.get(i + 1) > yea.get(i))
+        second = yea.get(i + 3) + yea.get(i + 2)+ yea.get(i + 1);
+        first = yea.get(i + 2) + yea.get(i + 1)+ yea.get(i);
+        */
+    	
+    	if(i == yea.size() - 1)
+        break;
+    	
+    	second = yea.get(i + 1);
+    	first = yea.get(i);
+    	
+    	if(second > first)    		
     	{
     	    count++;
     	}
