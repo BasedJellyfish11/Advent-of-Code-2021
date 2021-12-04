@@ -1,9 +1,9 @@
 isWinner <- function(x) {
   nas <- is.na(x)
   any(rowSums(nas) == ncol(x)) ||
-    any(colSums(nas) == nrow(x)) # || I did diagonals lmao
-  # sum((diag(nas))) == nrow(x) ||
-  # sum(diag(nas[, nrow(x):1])) == nrow(x)
+  any(colSums(nas) == nrow(x)) ||
+  sum((diag(nas))) == nrow(x) ||
+  sum(diag(nas[, nrow(x):1])) == nrow(x)
   
 }
 
@@ -41,8 +41,8 @@ part2 <- function() {
 }
 
 
-input <-read.fwf('../input',header = FALSE,skip = 2,widths = rep(3, 5)) # dude skip blank lines doesn't work for fwf wtf
-input <-input[rowSums(is.na(input)) != ncol(input), ] #remove separators because bingos are a construct
+input <- read.fwf('../input',header = FALSE,skip = 2,widths = rep(3, 5)) # dude skip blank lines doesn't work for fwf wtf
+input <- input[rowSums(is.na(input)) != ncol(input), ] #remove separators because bingos are a construct
 
 number_sequence <- read.csv('../input', header = FALSE, nrows = 1)
 
