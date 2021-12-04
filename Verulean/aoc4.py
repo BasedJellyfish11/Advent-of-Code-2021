@@ -42,8 +42,8 @@ class Bingo(object):
         board = self.__boards[i]
         b = self.__bingo_index[i]
         n = self.__draw_order[b]
-        score = n * np.sum(board[~np.isin(board, self.__draw_order[:b+1])])
-        return score
+        unmarked_sum = np.sum(board, where=~np.isin(board, self.__draw_order[:b+1]))
+        return n * unmarked_sum
 
 
 def solve():
