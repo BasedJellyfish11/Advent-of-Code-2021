@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <Nullable>enable</Nullable>
+        <Configurations>Debug;Release;PART 1;PART 2</Configurations>
+        <Platforms>AnyCPU</Platforms>
+    </PropertyGroup>
+
+</Project>
