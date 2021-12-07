@@ -1,7 +1,10 @@
 import numpy as np
 
 
-fmt_dict = {'sep': ','}
+fmt_dict = {
+    'sep': ',',
+    'cast_type': int
+    }
 
 def solve(data, day_targets=(80, 256)):
     initial_population = np.array(data, dtype=int)
