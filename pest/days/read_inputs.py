@@ -1,6 +1,4 @@
 dir = "pest/inputs/"
-fileName = "inputs.txt"
-fileName = "real_inputs.txt"
 
 def read_file(name):
     with open(dir + name, "r") as file:
