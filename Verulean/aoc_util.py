@@ -5,6 +5,8 @@ import os
 def aoc_input(n, input_dir="input", cast_type=str, strip=True, sep='\n'):
     cwd = os.path.dirname(__file__)
     with open(os.path.join(cwd, input_dir, f"{n}.txt"), 'r') as f:
+        if sep is None:
+            return f.read()
         return [cast_type(i.strip()) if strip else cast_type(i) for i in f.read().split(sep=sep)]
 
 def time_to_string(n, solve, data):

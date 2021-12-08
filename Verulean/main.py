@@ -10,7 +10,7 @@ def main(n=dt.today().day, time=False, n_trials=1000):
     data = aoc_util.aoc_input(n, **fmt)
     
     if time:
-        print(f"Day {n} solution averaged {aoc_util.time_to_string(n_trials, aoc.solve, data)} over {n_trials} runs.")
+        print(f"Day {n}: average of {aoc_util.time_to_string(n_trials, aoc.solve, data)} over {n_trials} runs.")
     print(aoc.solve(data))
 
 
