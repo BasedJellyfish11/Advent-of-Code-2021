@@ -1,5 +1,4 @@
 import numpy as np
-from collections import defaultdict
 
 
 def solve(data):
@@ -15,7 +14,7 @@ def solve(data):
         raw_out[i] = [set(x) for x in line[1].split()]
     
     # Determine linking scheme and decode output numbers
-    maps = defaultdict(lambda: set('X'))
+    maps = {}
     uniques = {2: 1, 3: 7, 4: 4, 7: 8}
     for i, (test_seq, num_out) in enumerate(zip(tests, raw_out)):
         maps.clear()
