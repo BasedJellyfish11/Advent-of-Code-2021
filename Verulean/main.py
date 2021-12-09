@@ -6,13 +6,15 @@ import aoc_util
 def main(n=dt.today().day, time=False, n_trials=1000):
     aoc = import_module(f"days.aoc{n}")
     fmt = getattr(aoc, 'fmt_dict', {})
-    
     data = aoc_util.aoc_input(n, **fmt)
     
     if time:
-        print(f"Day {n}: average of {aoc_util.time_to_string(n_trials, aoc.solve, data)} over {n_trials} runs.")
-    print(aoc.solve(data))
-
+        t = aoc_util.time_to_string(n_trials, aoc.solve, data)
+        print(f"Day {n}: average of {t} over {n_trials} runs.")
+    
+    solution = aoc.solve(data)
+    print(solution)
+    return solution
 
 if __name__ == '__main__':
-    main()
+    x = main()

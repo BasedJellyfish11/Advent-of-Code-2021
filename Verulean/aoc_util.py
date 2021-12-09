@@ -1,4 +1,5 @@
 from timeit import timeit
+from copy import deepcopy
 import os
 
 
@@ -11,7 +12,7 @@ def aoc_input(n, input_dir="input", cast_type=str, strip=True, sep='\n'):
 
 def time_to_string(n, solve, data):
     units = ((1e0, 's'), (1e-3, 'ms'), (1e-6, 'μs'), (1e-9, 'ns'))
-    t = timeit(lambda: solve(data), number=n) / n
+    t = timeit(lambda: solve(deepcopy(data)), number=n) / n
     
     for magnitude, unit in units:
         if t > magnitude:
