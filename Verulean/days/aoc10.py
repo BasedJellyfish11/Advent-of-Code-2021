@@ -17,14 +17,14 @@ class SyntaxScore:
         q = deque()
         for char in line:
             if char in self.pairs:
-                q.append(self.pairs[char])
-            elif char == q[-1]:
-                q.pop()
+                q.appendleft(self.pairs[char])
+            elif char == q[0]:
+                q.popleft()
             else: # Incorrect closing character
                 return (self.SubSyntaxError.BAD_CLOSE, char)
             
         if q: # Incomplete line
-            return (self.SubSyntaxError.INCOMPLET, ''.join(reversed(q)))
+            return (self.SubSyntaxError.INCOMPLET, q)
         
         else: # No syntax errors
             return (self.SubSyntaxError.ALL_CLEAR, None)
