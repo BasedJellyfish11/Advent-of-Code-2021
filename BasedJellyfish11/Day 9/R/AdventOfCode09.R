@@ -1,29 +1,15 @@
 check_low_points <- function(x){
-  last_number <- Inf
-  last_added <- 1
-  overwrite <- T
-  
+  copy <- x
   for (i in 1:length(x)) {
-    
-    if (x[i] >= last_number) {
-      last_number <- x[i]
-      overwrite <- F
-      x[i] <- F
+    if(i == 1){
+      x[i] <- copy[i]<copy[i+1]
+      next
     }
-    
-    else{
-      last_number <- x[i]
-      
-      if (overwrite) {
-        x[last_added] <- F
-      }
-      else{
-        overwrite <- T
-      }
-      
-      x[i] <- T
-      last_added <- i
+    if(i==length(x)){
+      x[i] <- copy[i] < copy[i-1]
     }
+    else
+      x[i] <- copy[i] < copy[i-1] && copy[i] < copy[i+1]
     
   }
   
@@ -31,7 +17,7 @@ check_low_points <- function(x){
   return(x)
 }
 
-input <- read.fwf('../example', c(rep(1, 10)))
+input <- read.fwf('../input', c(rep(1, 100)))
 
 lowpoints_horizontal <- t(apply(input, 1, check_low_points))
 lowpoints_vertical <- apply(t(input), 1, check_low_points)
