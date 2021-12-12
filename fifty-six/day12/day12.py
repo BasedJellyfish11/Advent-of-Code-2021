@@ -1,31 +1,36 @@
-from collections import defaultdict, deque
+from collections import defaultdict, deque, namedtuple
 from pprint import pprint
+
+Search = namedtuple("Search", ["node", "path", "visited", "twice"])
 
 test = False
 
-with open(f"../input/{'test_' if test else ''}day12.txt") as f:
-    lines = [x.strip() for x in f.readlines()]
+def parse():
+    with open(f"../input/{'test_' if test else ''}day12.txt") as f:
+        lines = [x.strip() for x in f.readlines()]
 
-graph = defaultdict(set)
+    graph = defaultdict(set)
 
-smalls = set()
+    for line in lines:
+        start, end = line.split("-")
 
-for line in lines:
-    start, end = line.split("-")
+        graph[start].add(end)
+        graph[end].add(start)
 
-    graph[start].add(end)
-    graph[end].add(start)
+    smalls = set(x for x in graph if x == x.lower())
 
-    # yeah it's inefficient what about it
-    if start.lower() == start:
-        smalls.add(start)
-    if end.lower() == end:
-        smalls.add(end)
+    return graph, smalls
 
 
-def bfs(allow_multi=False):
-    # tuple of (node, path, visited_smalls, has_visited_small_twice)
-    q = deque([("start", ("start",), {"start": 2}, False)])
+def bfs(graph, smalls, allow_multi=False):
+    q = deque([
+            Search(
+                node="start",
+                path=("start",),
+                visited={"start"},
+                twice=False,
+            )
+    ])
 
     fin = set()
 
@@ -40,23 +45,33 @@ def bfs(allow_multi=False):
             if adj == "start":
                 continue
 
-            visit_count = visited.get(adj, 0)
+            visited_adj = adj in visited
 
-            if visit_count >= 1 and (small_twice or not allow_multi):
+            if visited_adj and (small_twice or not allow_multi):
                 continue
 
             new_visited = visited
 
             if adj in smalls:
                 # not += because that's in-place.
-                new_visited = new_visited | {adj: visit_count + 1}
+                new_visited = new_visited | { adj }
 
-            q.append((adj, path + (adj,), new_visited, small_twice or visit_count >= 1))
+            q.append(
+                Search(
+                    node=adj,
+                    path=path + (adj,),
+                    visited=new_visited,
+                    twice=small_twice or visited_adj,
+                )
+            )
 
     if test:
         pprint(fin)
+
     pprint(len(fin))
 
 
-bfs()
-bfs(True)
+if __name__ == "__main__":
+    parsed = parse()
+    bfs(*parsed)
+    bfs(*parsed, True)
