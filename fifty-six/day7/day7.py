@@ -1,37 +1,24 @@
 from math import copysign, isnan
+import numpy as np
 
 test = False
 
 with open(f"../input/{'test_' if test else ''}day7.txt") as f:
     # :pinchers:
-    crabs = [int(x) for x in f.read().strip().split(",")]
+    crabs = np.array([int(x) for x in f.read().strip().split(",")])
 
 def sim_p1(h):
     # d/dh | x - h | = sgn(h - x)
-    err = 0
-    dh = 0
-    
-    for crab in crabs:
-        err += abs(crab - h)
-        dh += copysign(1, h - crab)
-    
-    return err, dh
+    return np.sum(np.abs(crabs - h)), np.sum(np.sign(h - crabs))
 
 def sim_p2(h):
     # let k = |x_i - h|
     # cost = k * (k + 1) / 2
     # so d/dh = sgn(h - x) / 2 + (h - x)
 
-    err = 0
-    dh = 0
-
-    for crab in crabs:
-        if crab == h:
-            continue
-
-        diff = abs(crab - h)
-        err += (diff * (diff + 1)) / 2
-        dh += .5 * copysign(1, h - crab) + (h - crab)
+    d   = np.abs(crabs - h)
+    err = np.sum((d * (d + 1)) / 2)
+    dh  = np.sum(.5 * np.sign(h - crabs) + (h - crabs))
 
     return err, dh
 
