@@ -1,8 +1,6 @@
 from collections import defaultdict, deque, namedtuple
 from pprint import pprint
 
-Search = namedtuple("Search", ["node", "path", "visited", "twice"])
-
 test = False
 
 def parse():
@@ -17,6 +15,11 @@ def parse():
         graph[start].add(end)
         graph[end].add(start)
 
+    for v in graph.values():
+        v -= {'start'}
+
+    del graph['end']
+
     smalls = set(x for x in graph if x == x.lower())
 
     return graph, smalls
@@ -24,27 +27,23 @@ def parse():
 
 def bfs(graph, smalls, allow_multi=False):
     q = deque([
-            Search(
-                node="start",
-                path=("start",),
-                visited={"start"},
-                twice=False,
+            (
+                "start",
+                set(),
+                False,
             )
     ])
 
-    fin = set()
+    fin = 0
 
     while q:
-        node, path, visited, small_twice = q.pop()
+        node, visited, small_twice = q.pop()
 
         if node == "end":
-            fin.add(path)
+            fin += 1
             continue
 
         for adj in graph[node]:
-            if adj == "start":
-                continue
-
             visited_adj = adj in visited
 
             if visited_adj and (small_twice or not allow_multi):
@@ -57,18 +56,14 @@ def bfs(graph, smalls, allow_multi=False):
                 new_visited = new_visited | { adj }
 
             q.append(
-                Search(
-                    node=adj,
-                    path=path + (adj,),
-                    visited=new_visited,
-                    twice=small_twice or visited_adj,
+                (
+                    adj,
+                    new_visited,
+                    small_twice or visited_adj,
                 )
             )
 
-    if test:
-        pprint(fin)
-
-    pprint(len(fin))
+    pprint(fin)
 
 
 if __name__ == "__main__":
