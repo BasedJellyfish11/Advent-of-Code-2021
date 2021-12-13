@@ -25,7 +25,7 @@ def parse():
     return graph, smalls
 
 
-def bfs(graph, smalls, allow_multi=False):
+def dfs(graph, smalls, allow_multi=False):
     q = deque([
             (
                 "start",
@@ -68,5 +68,5 @@ def bfs(graph, smalls, allow_multi=False):
 
 if __name__ == "__main__":
     parsed = parse()
-    bfs(*parsed)
-    bfs(*parsed, True)
+    dfs(*parsed)
+    dfs(*parsed, True)
