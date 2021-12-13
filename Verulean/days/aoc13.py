@@ -30,8 +30,7 @@ class TransparencyOrigami:
     def _fold(self, axis, index):
         fold_index = (self._points[:, axis] > index, axis)
         self._points[fold_index] = 2 * index - self._points[fold_index]
-        # Removing overlapping points here is slow due to sorting/reallocation
-        # self._points = np.unique(self._points, axis=0)
+        self._points = np.unique(self._points, axis=0)
     
     def solve(self):
         self._fold(*self._folds[0])
