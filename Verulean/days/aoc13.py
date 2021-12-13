@@ -1,68 +1,52 @@
 import numpy as np
-from collections import defaultdict, deque
+
 
 fmt_dict = {
     'sep': '\n\n',
     }
 
-# fmt_dict['test'] = True
-
-def fold(paper, axis, index):
-    m, n = paper.shape
-    if axis == 0:
-        bottom = paper[:index]
-        m2, n2 = bottom.shape
-        top = np.flipud(paper[index+1:])
-        m3, n3 = top.shape
-        if m2 > m3:
-            top = np.append(np.zeros((m2 - m3, n), dtype=bool), top, axis=axis)
-            print(0)
-        elif m3 > m2:
-            bottom = np.append(np.zeros((m3 - m2, n), dtype=bool), bottom, axis=axis)
-            print(1)
-    else:
-        bottom = paper[:, :index]
-        m2, n2 = bottom.shape
-        top = np.fliplr(paper[:, index+1:])
-        m3, n3 = top.shape
-        if n2 > n3:
-            top = np.append(np.zeros((m, n2 - n3), dtype=bool), top, axis=axis)
-            print(2)
-        elif n3 > n2:
-            bottom = np.append(np.zeros((m, n3 - n2), dtype=bool), bottom, axis=axis)
-            print(3)
+class TransparencyOrigami:
+    def __init__(self, points, folds):
+        points = np.array([coord.split(',') for coord in points], dtype=int)
+        folds = [instr[11:].split('=') for instr in folds]
+        
+        n, m = np.amax(points, axis=0) + 1
+        self._paper = np.zeros((m, n), dtype=bool)
+        self._paper[(points[:,1], points[:,0])] = True
+        
+        self._folds = tuple(
+            (1 if axis == 'x' else 0, int(index)) 
+            for axis, index in folds
+            )
     
-    return (bottom | top)
-
-def print_sheet(paper, fg='#', bg=' '):
-    p = np.where(paper, fg, bg)
-    for row in p:
-        print(''.join(row))
+    def to_string(self, fg='#', bg=' '):
+        p = np.where(self._paper, fg, bg)
+        return '\n'.join(''.join(row) for row in p)
+    
+    def _fold(self, axis, index):
+        bottom, _, top = np.split(self._paper, [index, index+1], axis=axis)
+        
+        m_b, n_b = bottom.shape
+        m_t, n_t = top.shape
+        M, N = max(m_b, m_t), max(n_b, n_t)
+        self._paper = np.zeros((M, N), dtype=bool)
+        
+        if axis == 0:
+            self._paper[:m_b] |= bottom
+            self._paper[-1:-(m_t+1):-1] |= top
+        elif axis == 1:
+            self._paper[:, :n_b] |= bottom
+            self._paper[:, -1:-(n_t+1):-1] |= top
+    
+    def solve(self):
+        self._fold(*self._folds[0])
+        first_fold_dots = np.count_nonzero(self._paper)
+        
+        for axis, index in self._folds[1:]:
+            self._fold(axis, index)
+        
+        return first_fold_dots, self.to_string()
 
 def solve(data):
-    points, instructions = data
-    points = points.split('\n')
-    points = [coord.split(',') for coord in points]
-    instructions = instructions.split('\n')
-    instructions = [ins[11:].split('=') for ins in instructions]
-    
-    points = np.array(points, dtype=int)
-    n, m = np.amax(points, axis=0) + 1
-    
-    paper = np.zeros((m, n), dtype=bool)
-    paper[(points[:,1], points[:,0])] = True
-    
-    axis_dict = {'y':0, 'x':1}
-    
-    for i, (axis, index) in enumerate(instructions):
-        m, n = paper.shape
-        index = int(index)
-        if axis == 0:
-            print(m, index, m/index)
-        else:
-            print(n, index, n/index)
-        paper = fold(paper, axis_dict[axis], index)
-        # if i == 0:
-        #     print(np.count_nonzero(paper))
-    print_sheet(paper)
-    return paper
+    points, folds = map(lambda s: s.split('\n'), data)
+    return TransparencyOrigami(points, folds).solve()
