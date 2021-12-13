@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, deque
 
 
 class CavePaths:
@@ -11,49 +11,46 @@ class CavePaths:
             self._connections[a].add(b)
             self._connections[b].add(a)
         
+        # Cannot leave end or re-enter start
         del self._connections['end']
         for options in self._connections.values():
-            options -= {'start',}
+            options -= {'start'}
         
-        # Intiialize other instance variables
-        self._completed_paths = set()
-        self._small = set(cave for cave in self._connections if cave == cave.lower())
-        
-    def _routes(self, path, small_validator):
-        for cave in self._connections[path[-1]]:
-            if cave in self._small and cave in path:
-                if small_validator(path):
-                    yield cave
-            else:
-                yield cave
+        # Identify small caves
+        self._small = set(cave for cave in self._connections if cave.islower())
     
-    def _count_paths(self, part):
-        self._completed_paths.clear()
+    def _count_paths(self, allow_multi=False):
+        completed_paths = 0
         
-        if part == 1:
-            def validator(path):
-                return False
-        elif part == 2:
-            def validator(path):
-                for small_cave in self._small:
-                    if path.count(small_cave) >= 2:
-                        return False
-                return True
+        paths = deque([(
+                "start",
+                {"start"},
+                False,
+                )])
         
-        paths = {('start',),}
         while paths:
-            old_paths, paths = paths, set()
-            for path in old_paths:
-                if path[-1] == 'end':
-                    self._completed_paths.add(path)
-                else:
-                    for next_cave in self._routes(path, validator):
-                        paths.add(path + (next_cave,))
+            node, visited, small_twice = paths.pop()
+            
+            if node == 'end':
+                completed_paths += 1
+                continue
 
-        return len(self._completed_paths)
+            for next_cave in self._connections[node]:
+                revisit = next_cave in visited
+                if revisit and (small_twice or not allow_multi):
+                    continue
+                
+                new_visited = \
+                    visited | {next_cave} \
+                    if next_cave in self._small \
+                    else visited
+                
+                paths.append((next_cave, new_visited, small_twice or revisit))
+
+        return completed_paths
     
     def solve(self):
-        return tuple(self._count_paths(part) for part in (1, 2))
+        return self._count_paths(), self._count_paths(True)
 
 def solve(data):
     return CavePaths(data).solve()
