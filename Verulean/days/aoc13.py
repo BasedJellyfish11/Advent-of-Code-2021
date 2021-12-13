@@ -30,11 +30,10 @@ class TransparencyOrigami:
     def _fold(self, axis, index):
         fold_index = (self._points[:, axis] > index, axis)
         self._points[fold_index] = 2 * index - self._points[fold_index]
-        self._points = np.unique(self._points, axis=0)
     
     def solve(self):
         self._fold(*self._folds[0])
-        first_fold_dots = len(self._points)
+        first_fold_dots = len(np.unique(self._points, axis=0))
         
         for axis, index in self._folds[1:]:
             self._fold(axis, index)
