@@ -27,30 +27,34 @@ rev_left = { y: x for (x, y) in rev.items() }
 left = set(rev.values())
 right = set(rev.keys())
 
-p1_total = 0
-p2_scores = []
-for line in lines:
-    q = []
-    for char in line:
-        if char in left:
-            q.append(char)
-        elif char in right:
-            if q[-1] != rev[char]:
-                p1_total += score_p1[char]
-                break
-            else:
-                q.pop()
-    else:
-        line_score = 0
+def solve():
+    p1_total = 0
+    p2_scores = []
+    for line in lines:
+        q = []
+        for char in line:
+            if char in left:
+                q.append(char)
+            elif char in right:
+                if q[-1] != rev[char]:
+                    p1_total += score_p1[char]
+                    break
+                else:
+                    q.pop()
+        else:
+            line_score = 0
+    
+            while q:
+                c = q.pop()
+                line_score *= 5
+                line_score += score_p2[rev_left[c]]
+    
+            p2_scores.append(line_score)
+    
+    p2_scores.sort()
+    return p1_total, p2_scores[len(p2_scores) // 2]
 
-        while q:
-            c = q.pop()
-            line_score *= 5
-            line_score += score_p2[rev_left[c]]
-
-        p2_scores.append(line_score)
-
-p2_scores.sort()
-
-print("p1: ", total_score_p1)
-print("p2: ", p2_scores[((len(p2_scores) + 1) // 2) - 1])
+if __name__ == "__main__":
+    p1, p2 = solve()
+    print("p1: ", p1)
+    print("p2: ", p2)
