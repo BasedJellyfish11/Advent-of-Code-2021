@@ -1,7 +1,7 @@
 from collections import Counter, defaultdict
 
 def parse():
-    test = False
+    test = True
     
     with open(f"../input/{'test_' if test else ''}day14.txt") as f:
         lines = [x.strip() for x in f.readlines()]
@@ -31,12 +31,12 @@ def recur(poly, rules, n):
 def count(poly):
     letters = defaultdict(int)
     for ind, (key, v) in enumerate(poly.items()):
-        for l in key[1 if ind == 0 else 0:]:
+        for l in key[0 if ind == 0 else 1:]:
             letters[l] += v
 
     c = Counter(letters)
 
-    return (max(c.values()) // 2 - min(c.values()) // 2 - 1)
+    return (max(c.values()) - min(c.values()))
 
 
 def dict_from_str(poly):
@@ -51,6 +51,8 @@ def solve(polymer, rules):
     poly_dict = dict_from_str(polymer)
     p1 = count(recur(poly_dict, rules, 10))
     p2 = count(recur(poly_dict, rules, 40))
+    return p1, p2
 
 if __name__ == "__main__":
-    solve(*parse())
+    p1, p2 = solve(*parse())
+    print(p1, p2)
