@@ -1,44 +1,42 @@
-from collections import defaultdict
+from collections import Counter
 
 
 fmt_dict = {
     'sep': '\n\n'
     }
 
-# fmt_dict['test'] = True
-
-def pairs(s):
-    for i in range(len(s)-1):
-        yield s[i:i+2]
-
-def new_pairs(old_pair, insert_char):
-    return old_pair[0] + insert_char, insert_char + old_pair[1]
+class PairwisePolymer:
+    def __init__(self, template, rules):
+        self._rules = {pair : insert for pair, insert in rules}
+        
+        self._pair_counts = Counter()
+        for i in range(len(template) - 1):
+            self._pair_counts[template[i:i+2]] += 1
+        
+        self._letter_counts = Counter(template)
+    
+    def _step(self):
+        prev_rules, self._pair_counts = self._pair_counts, Counter()
+        
+        for pair, count in prev_rules.items():
+            insert = self._rules[pair]
+            self._letter_counts[insert] += count
+            self._pair_counts[pair[0]+insert] += count
+            self._pair_counts[insert+pair[1]] += count
+    
+    def _metric(self):
+        c = self._letter_counts.values()
+        return max(c) - min(c)
+    
+    def _run(self, n):
+        for _ in range(n):
+            self._step()
+        return self._metric()
+    
+    def solve(self):
+        return self._run(10), self._run(40 - 10)
 
 def solve(data):
-    start, rules = data
+    template, rules = data
     rules = [rule.split(' -> ') for rule in rules.split('\n')]
-    rules = {a:b for a, b in rules}
-    
-    rule_counts = defaultdict(int)
-    for pair in pairs(start):
-        if pair in rules:
-            rule_counts[pair] += 1
-    
-    letter_counts = defaultdict(int)
-    for c in start:
-        letter_counts[c] += 1
-    
-    for i in range(40):
-        if i == 10:
-            c = letter_counts.values()
-            ans_a = max(c) - min(c)
-        old_rules = rule_counts
-        rule_counts = defaultdict(int)
-        for pair, count in old_rules.items():
-            for new_pair in new_pairs(pair, rules[pair]):
-                rule_counts[new_pair] += count
-            letter_counts[rules[pair]] += count
-    
-    c = letter_counts.values()
-    ans_b = max(c) - min(c)
-    return ans_a, ans_b
+    return PairwisePolymer(template, rules).solve()
