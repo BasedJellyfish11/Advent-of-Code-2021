@@ -1,110 +1,100 @@
-test = False
+fmt_dict = {
+    'sep': None,
+    }
 
 def bint(n):
-    return int(''.join(n), 2)
+    return int(n, 2)
 
-hex_bin = {
-    '0': '0000',
-    '1': '0001',
-    '2': '0010',
-    '3': '0011',
-    '4': '0100',
-    '5': '0101',
-    '6': '0110',
-    '7': '0111',
-    '8': '1000',
-    '9': '1001',
-    'A': '1010',
-    'B': '1011',
-    'C': '1100',
-    'D': '1101',
-    'E': '1110',
-    'F': '1111',
-    }
-
-fmt_dict = {
-    'sep': None
-    }
-
-if test:
-    fmt_dict['file_prefix'] = 'test_'
-
-def header(s):
-    version = bint(s[0:3])
-    type_ID = bint(s[3:6])
-    s[:] = s[6:]
+class BitView:
+    def __init__(self, binary_string):
+        self._bits = binary_string
+        self._index = 0
     
-    return version, type_ID
-
-def literal(s, offset):
-    num = ''
-    while s[0] == '1':
-        num += ''.join(s[1:5])
-        s[:] = s[5:]
-        offset = (offset + 5) % 4
-    num += ''.join(s[1:5])
-    s[:] = s[5:]
+    def __len__(self):
+        return len(self._bits[self._index:])
     
-    # num = num.lstrip('0')
-    # offset = (offset + 5) % 4
+    def get(self, bit_count):
+        view = self._bits[self._index:self._index + bit_count]
+        self._index += bit_count
+        return view
     
-    # if offset:
-    #     for _ in range(4 - offset):
-    #         s[:] = s[1:]
-    
-    return int(num, 2), offset
+    def get_subview(self, bit_count):
+        return type(self)(self.get(bit_count))
 
-def operator(s):
-    if s[0] == '0':
-        ID = 0
-        n = bint(s[1:16])
-        s[:] = s[16:]
-    else:
-        ID = 1
-        n = bint(s[1:12])
-        s[:] = s[12:]
-    return ID, n
-
-version_sum = 0
-
-class Packet:
-    def __init__(self, s, packet_count=None, offset=0):
-        self.ver, self.type = header(s)
-        offset = (offset + 6) % 4
+class BITSParser(BitView):
+    @classmethod
+    def from_hex(cls, transmission):
+        bits = ''
+        for hex_digit in transmission:
+            bits += bin(int(hex_digit, 16))[2:].zfill(4)
         
-        global version_sum
-        version_sum += self.ver
+        return cls(bits)
+    
+    def header(self):
+        version = bint(self.get(3))
+        type_id = bint(self.get(3))
         
-        if self.type == 4:
-            self.value, offset = literal(s, offset)
+        return version, type_id
+    
+    def literal(self):
+        num = ''
+        
+        block = self.get(5)
+        while block[0] == '1':
+            num += block[1:]
+            block = self.get(5)
+        num += block[1:]
+        
+        return bint(num)
+    
+    def operator(self):
+        length_id = self.get(1)
+        if length_id == '0':
+            n = self.get(15)
         else:
-            self.length_ID, self.N = operator(s)
+            n = self.get(11)
             
-            if self.length_ID == 0:
-                self.subpackets = []
-                new_s = s[:self.N]
-                while new_s:
-                    self.subpackets.append(Packet(new_s))
-                s[:] = s[self.N:]
+        return length_id, bint(n)
+
+class BITSPacket:
+    def __init__(self, bits: BITSParser):
+        self.version, self.type = bits.header()
+        self.subpackets = []
+        
+        if self.type == 4: # Literal value
+            self.value = bits.literal()
+        
+        else: # Operator
+            self.length_id, self.N = bits.operator()
+            
+            if self.length_id == '0':
+                # Specified number of bits
+                bit_window = bits.get_subview(self.N)
+                while bit_window:
+                    self.subpackets.append(type(self)(bit_window))
             else:
-                self.subpackets = []
+                # Specified number of subpackets
                 for _ in range(self.N):
-                    self.subpackets.append(Packet(s))
+                    self.subpackets.append(type(self)(bits))
+    
+    def version_sum(self):
+        return self.version + sum(sub.version_sum() for sub in self.subpackets)
     
     def eval(self):
-        if self.type == 4:
-            return self.value
-        elif self.type == 0: # sum
-            return sum(x.eval() for x in self.subpackets)
+        # Python 3.9 so no match case woooooooooooooooooooooooooooooo
+        if self.type == 0:
+            return sum(sub.eval() for sub in self.subpackets)
         elif self.type == 1:
             prod = 1
-            for x in self.subpackets:
-                prod *= x.eval()
+            for sub in self.subpackets:
+                prod *= sub.eval()
             return prod
         elif self.type == 2:
-            return min(x.eval() for x in self.subpackets)
+            return min(sub.eval() for sub in self.subpackets)
         elif self.type == 3:
-            return max(x.eval() for x in self.subpackets)
+            return max(sub.eval() for sub in self.subpackets)
+        elif self.type == 4:
+            return self.value
         elif self.type == 5:
             return int(self.subpackets[0].eval() > self.subpackets[1].eval())
         elif self.type == 6:
@@ -112,13 +102,7 @@ class Packet:
         elif self.type == 7:
             return int(self.subpackets[0].eval() == self.subpackets[1].eval())
 
-
 def solve(data):
-    binary_data = ''
-    for hex_digit in data:
-        binary_data += hex_bin[hex_digit]
-    binary_data = list(binary_data)
-    
-    res = Packet(binary_data)
-    
-    return version_sum, res.eval()
+    bits = BITSParser.from_hex(data)
+    parsed_packet = BITSPacket(bits)
+    return parsed_packet.version_sum(), parsed_packet.eval()
