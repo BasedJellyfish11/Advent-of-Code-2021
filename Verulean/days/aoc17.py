@@ -23,13 +23,13 @@ class TrickShot:
         return (-t**2 + t) // 2 + v * t
     
     @staticmethod
-    def x(vx, t): return TrickShot._pos(vx, min(t, vx + 1))
+    def x(vx, t): return TrickShot._pos(vx, min(t, vx))
     
     @staticmethod
     def y(vy, t): return TrickShot._pos(vy, t)
     
     @staticmethod
-    def maximum_distance(vx): return TrickShot._pos(vx, vx + 1)
+    def maximum_distance(vx): return TrickShot._pos(vx, vx)
     
     @staticmethod
     def maximum_height(vy):
