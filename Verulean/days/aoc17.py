@@ -19,24 +19,23 @@ class TrickShot:
         self.shots = 0
     
     @staticmethod
-    def x(vx, t):
-        t = min(t, vx + 1)
-        return (-t**2 + t) // 2 + t * vx
+    def _pos(v, t):
+        return (-t**2 + t) // 2 + v * t
     
     @staticmethod
-    def y(vy, t):
-        return (-t**2 + t) // 2 + t * vy
+    def x(vx, t): return TrickShot._pos(vx, min(t, vx + 1))
     
     @staticmethod
-    def maximum_distance(vx):
-        t = vx + 1
-        return (-t**2 + t) // 2 + t * vx
+    def y(vy, t): return TrickShot._pos(vy, t)
+    
+    @staticmethod
+    def maximum_distance(vx): return TrickShot._pos(vx, vx + 1)
     
     @staticmethod
     def maximum_height(vy):
         if vy <= 0:
             return 0
-        return max(map(lambda t: (-t**2 + t) // 2 + t * vy, (vy, vy + 1)))
+        return max(TrickShot._pos(vy, vy), TrickShot._pos(vy, vy + 1))
     
     def hits_target(self, vx, vy):
         peak_x, peak_y = TrickShot.maximum_distance(vx), TrickShot.maximum_height(vy)
