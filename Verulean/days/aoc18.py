@@ -1,163 +1,214 @@
-class SnailfishNumber:
-    @staticmethod
-    def pair_elements(pair):
-        pair = pair[1:-1]
-        depth = 0
-        for i, c in enumerate(pair):
-            if c == '[':
-                depth += 1
-            elif c == ']':
-                depth -= 1
-            
-            if depth == 0:
-                while pair[i+1] != ',':
-                    i += 1
-                return pair[:i+1], pair[i+2:]
-    
-    def __init__(self, number, depth=0, parent=None, position=None):
-        self._depth = depth
-        self._parent = parent
-        self._pos = position
-        self._left = None
-        self._right = None
+fmt_dict = {
+    'sep': '\n'
+    }
+
+def get_pairs(n):
+    nest = 0
+    n = n[1:-1]
+    pairs = []
+    for i, c in enumerate(n):
+        if c == '[':
+            nest += 1
+        elif c == ']':
+            nest -= 1
+        
+        if nest == 0:
+            pairs.append(n[:i+1])
+            pairs.append(n[i+1:].lstrip(','))
+            return pairs
+
+class Number:
+    def __init__(self, number, rec=0, parent=None, pos=None):
+        self.rec = rec
+        self.parent = parent
+        self.pos = pos
+        
+        self.left = None
+        self.right = None
         
         if '[' not in number:
-            self._type = 0
-            self._value = int(number)
+            self.type = 0
+            self.value = int(number)
         else:
-            self._type = 1
-            l, r = SnailfishNumber.pair_elements(number)
-            
-            self._left = SnailfishNumber(
-                l, 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 0
-                )
-            
-            self._right = SnailfishNumber(
-                r, 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 1
-                )
+            self.type = 1
+            l, r = get_pairs(number)
+            self.left = Number(l, rec=self.rec+1, parent=self, pos='l')
+            self.right = Number(r, rec=self.rec+1, parent=self, pos='r')
+        
+        # self.reduce()
+    
+    @classmethod
+    def from_children(cls, left, right):
+        x = cls('0')
+        x.left = left
+        x.right = right
+        x.type = 1
+        
+        x.left.parent = x
+        x.right.parent = x
+        x.left.pos = 'l'
+        x.right.pos = 'r'
+        return x
     
     def __str__(self):
-        if self._type == 0:
-            return str(self._value)
-        return f"[{self._left},{self._right}]"
+        if self.type == 0:
+            return str(self.value)
+        else:
+            return f"[{self.left},{self.right}]"
+    
+    def nest(self):
+        self.rec += 1
+        if self.type == 1:
+            for child in (self.left, self.right):
+                child.nest()
     
     def magnitude(self):
-        if self._type == 0:
-            return self._value
-        return 3 * self._left.magnitude() + 2 * self._right.magnitude()
-    
-    def _split(self):
-        if self._type == 1:
-            if self._left._split():
+        if self.type == 0:
+            return self.value
+        return 3 * self.left.magnitude() + 2 * self.right.magnitude()
+
+    def split(self):
+        # print(f"splitting {self}")
+        if self.type == 1:
+            if self.left.split():
                 return True
-            if self._right._split():
+            if self.right.split():
                 return True
         
-        if self._type == 0 and self._value >= 10:
-            self._type = 1
-            l = self._value // 2
-            r = l + (self._value % 2)
-            
-            self._left = SnailfishNumber(
-                str(l), 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 0
-                )
-            
-            self._right = SnailfishNumber(
-                str(r),
-                depth = self._depth + 1,
-                parent = self,
-                position = 1
-                )
-            
+        if self.type == 0 and self.value >= 10:
+            self.type = 1
+            l = self.value // 2
+            if self.value % 2 == 0:
+                r = l
+            else:
+                r = l + 1
+            self.left = Number(str(l), rec=self.rec+1, parent=self, pos='l')
+            self.right = Number(str(r), rec=self.rec+1, parent=self, pos='r')
             return True
         
         return False
     
-    def _extreme_radd(self, n):
-        if self._right._type == 0:
-            self._right._value += n
+    def extreme_r_add(self, n):
+        if self.right.type == 0:
+            self.right.value += n
         else:
-            self._right._extreme_radd(n)
+            self.right.extreme_r_add(n)
     
-    def _extreme_ladd(self, n):
-        if self._left._type == 0:
-            self._left._value += n
+    def extreme_l_add(self, n):
+        if self.left.type == 0:
+            self.left.value += n
         else:
-            self._left._extreme_ladd(n)
+            self.left.extreme_l_add(n)
     
-    def _radd(self, n, caller_position, cascade=False):
-        if caller_position == 0:
-            if self._right._type == 0:
-                self._right._value += n
+    # def r_add(self, n, call_pos, sideline=False):
+    #     # print(self)
+    #     if call_pos == 'l':
+    #         if self.right.type == 0:
+    #             self.right.value += n
+    #         elif sideline:
+    #             self.right.r_add(n, 'r', True)
+    #         else:
+    #             self.right.l_add(n, 'r', True)
+    #     elif self.parent is not None:
+    #         self.parent.r_add(n, self.pos)
+    
+    def r_add(self, n, call_pos, cascade=False):
+        if call_pos == 'l':
+            if self.right.type == 0:
+                self.right.value += n
             elif cascade:
-                self._right._extreme_ladd(n)
+                self.right.extreme_l_add(n)
             else:
-                self._right._ladd(n, 1, True)
-        elif self._parent is not None:
-            self._parent._radd(n, self._pos, True)
+                self.right.l_add(n, 'r', True)
+        elif self.parent is not None:
+            self.parent.r_add(n, self.pos, True)
     
-    def _ladd(self, n, caller_position, cascade=False):
-        if caller_position == 1:
-            if self._left._type == 0:
-                self._left._value += n
+    def l_add(self, n, call_pos, cascade=False):
+        if call_pos == 'r':
+            if self.left.type == 0:
+                self.left.value += n
             elif cascade:
-                self._left._extreme_radd(n)
+                self.left.extreme_r_add(n)
             else:
-                self._left._radd(n, 0, True)
-        elif self._parent is not None:
-            self._parent._ladd(n, self._pos, True)
+                self.left.r_add(n, 'l', True)
+        elif self.parent is not None:
+            self.parent.l_add(n, self.pos, True)
     
-    def _explode(self):
-        if self._type == 1:
-            if self._left._explode():
+    def explode(self):
+        # print(f"exploding {self}")
+        if self.type == 1:
+            if self.left.explode():
                 return True
-            if self._right._explode():
+            if self.right.explode():
                 return True
-        
-        if self._type == 1 \
-            and self._depth == 4 \
-            and self._left._type == 0 \
-            and self._right._type == 0:
-                self._parent._ladd(self._left._value, self._pos)
-                self._parent._radd(self._right._value, self._pos)
-                
-                self._type = 0
-                self._value = 0
-                
-                return True
+            
+        if self.type == 1 and self.rec == 4 and self.left.type == 0 and self.right.type == 0:
+            self.parent.l_add(self.left.value, self.pos)
+            self.parent.r_add(self.right.value, self.pos)
+            self.type = 0
+            self.value = 0
+            return True
         
         return False
     
     def reduce(self):
-        while self._explode() or self._split():
-            pass
+        while True:
+            # if self.rec == 0:
+            #     print(self)
+            if self.explode():
+                continue
+            if self.split():
+                continue
+            break
+        return self
     
-    def __add__(self, other):
-        result = SnailfishNumber(f"[{self},{other}]")
-        result.reduce()
-        return result
+    def __mul__(self, other):
+        num_sum = Number(f"[{self},{other}]")
+        # self.nest()
+        # other.nest()
+        # num_sum = Number.from_children(self, other)
+        return num_sum
 
-def solve(numbers):
-    numbers = [SnailfishNumber(x) for x in numbers]
+def solve(data):
+    # x = Number(data[0])
+    # x.reduce()
+    # for s in data[1:]:
+    #     y = Number(s)
+    #     x = x + Number(s)
+    #     print(x.magnitude())
     
-    snail_sum = numbers[0]
-    for next_num in numbers[1:]:
-        snail_sum += next_num
-    ans_a = snail_sum.magnitude()
     
-    ans_b = 0
-    for x in numbers:
-        for y in numbers:
-            if x is not y:
-                ans_b = max(ans_b, (x+y).magnitude())
+<<<<<<< HEAD
+    ans_a = sum(numbers[1:], start=numbers[0]).magnitude()
+=======
+    x = Number(data[0])
+    # x.reduce()
+    # i = 1
+    for next_num_str in data[1:]:
+        # y = Number(next_num_str)
+        # y.reduce()
+        x = x * Number(next_num_str)
+        # print(x)
+        x.reduce()
+    # print(x)
+    ans_a = x.magnitude()
+>>>>>>> parent of 7b53af4 (day 17 cleanup)
     
+    
+    max_magnitude = 0
+    for i, x in enumerate(data):
+        for j, y in enumerate(data):
+            if i != j:
+                snail_sum = Number(x) * Number(y)
+                snail_sum.reduce()
+                max_magnitude = max(max_magnitude, snail_sum.magnitude())
+    ans_b = max_magnitude
     return ans_a, ans_b
+
+# if __name__ == '__main__':
+#     t = [f"[{i},{i}]" for i in range(1, 7)]
+#     x = Number(t[0])
+#     for s in t[1:]:
+#         y = Number(s)
+#         x = x * y
+#     print(x)
