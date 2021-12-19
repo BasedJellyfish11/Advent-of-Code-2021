@@ -11,9 +11,8 @@ class SnailfishNumber:
             self._value = number
         else:
             self._type = 1
-            l, r = number
-            self._children[0] = SnailfishNumber(l, depth=self._depth+1, parent=self, position=0)
-            self._children[1] = SnailfishNumber(r, depth=self._depth+1, parent=self, position=1)
+            for i in range(2):
+                self._children[i] = SnailfishNumber(number[i], depth=self._depth+1, parent=self, position=i)
     
     def __str__(self):
         if self._type == 0:
