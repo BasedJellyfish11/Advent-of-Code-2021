@@ -1,10 +1,36 @@
 from collections import defaultdict
-from itertools import product
 
 
 fmt_dict = {
     'sep': '\n\n'
     }
+
+axis_rotations = (
+    ((0,1,2), (1,1,1)),
+    ((0,1,2), (1,-1,-1)),
+    ((0,1,2), (-1,1,-1)),
+    ((0,1,2), (-1,-1,1)),
+    ((1,2,0), (1,1,1)),
+    ((1,2,0), (1,-1,-1)),
+    ((1,2,0), (-1,1,-1)),
+    ((1,2,0), (-1,-1,1)),
+    ((2,0,1), (1,1,1)),
+    ((2,0,1), (1,-1,-1)),
+    ((2,0,1), (-1,1,-1)),
+    ((2,0,1), (-1,-1,1)),
+    ((0,2,1), (-1,-1,-1)),
+    ((0,2,1), (1,1,-1)),
+    ((0,2,1), (1,-1,1)),
+    ((0,2,1), (-1,1,1)),
+    ((1,0,2), (-1,-1,-1)),
+    ((1,0,2), (1,1,-1)),
+    ((1,0,2), (1,-1,1)),
+    ((1,0,2), (-1,1,1)),
+    ((2,1,0), (-1,-1,-1)),
+    ((2,1,0), (1,1,-1)),
+    ((2,1,0), (1,-1,1)),
+    ((2,1,0), (-1,1,1)),
+    )
 
 class Point3D(tuple):
     def __neg__(self):
@@ -65,23 +91,11 @@ def find_shift(snow1, snow2, required=12):
                 return target - source
     return False
 
-P = {
-     0: ((0,1,2),(1,2,0),(2,0,1)),
-     1: ((0,2,1),(1,0,2),(2,1,0)),
-     }
-
-M = {
-     0: ((1,1,1),(1,-1,-1),(-1,1,-1),(-1,-1,1)),
-     1: ((-1,-1,-1),(1,1,-1),(1,-1,1),(-1,1,1))
-     }
-
 def find_map(A, B):
-    for i in range(2):
-        for perm, mult in product(P[i], M[i]):
-            B_new = rotate_snowflake(B, perm, mult)
-            shift = find_shift(A, B_new)
-            if shift:
-                return perm, mult, shift
+    for i, B_rot in enumerate(B):
+        shift = find_shift(A, B_rot)
+        if shift:
+            return *axis_rotations[i], shift
     return False
 
 def forward_map(point, p, r, s):
@@ -100,12 +114,12 @@ def map_points(points, map_key):
     elif direction == 1:
         return {reverse_map(point, *point_map) for point in points}
 
-def build_maps(scanners):
+def build_maps(snowflakes):
     maps = {}
-    N = len(scanners)
+    N = len(snowflakes)
     for i in range(N):
         for j in range(i+1, N):
-            if (m := find_map(scanners[i], scanners[j])):
+            if (m := find_map(snowflakes[i][0], snowflakes[j])):
                 maps[(i, j)] = (0, m)
                 maps[(j, i)] = (1, m)
     return maps
@@ -145,10 +159,15 @@ def solve(data):
     N = len(data)
     scanners = []
     snowflakes = []
-    for scanner in data:
+    
+    for i, scanner in enumerate(data):
         points, snowflake = parse_scanner(scanner)
         scanners.append(points)
-        snowflakes.append(snowflake)
+        snowflakes.append([snowflake])
+    
+    for i in range(N):
+        for j in range(1, len(axis_rotations)):
+            snowflakes[i].append(rotate_snowflake(snowflakes[i][0], *axis_rotations[j]))
     
     maps = build_maps(snowflakes)
     final_scanner, order = reassembly_order(maps, range(N))
