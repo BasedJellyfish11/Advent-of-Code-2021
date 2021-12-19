@@ -1,135 +1,76 @@
 class SnailfishNumber:
-    @staticmethod
-    def pair_elements(pair):
-        pair = pair[1:-1]
-        depth = 0
-        for i, c in enumerate(pair):
-            if c == '[':
-                depth += 1
-            elif c == ']':
-                depth -= 1
-            
-            if depth == 0:
-                while pair[i+1] != ',':
-                    i += 1
-                return pair[:i+1], pair[i+2:]
-    
     def __init__(self, number, depth=0, parent=None, position=None):
+        self._master = number
         self._depth = depth
         self._parent = parent
         self._pos = position
-        self._left = None
-        self._right = None
+        self._children = [None, None]
         
-        if '[' not in number:
+        if isinstance(number, int):
             self._type = 0
-            self._value = int(number)
+            self._value = number
         else:
             self._type = 1
-            l, r = SnailfishNumber.pair_elements(number)
-            
-            self._left = SnailfishNumber(
-                l, 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 0
-                )
-            
-            self._right = SnailfishNumber(
-                r, 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 1
-                )
+            l, r = number
+            self._children[0] = SnailfishNumber(l, depth=self._depth+1, parent=self, position=0)
+            self._children[1] = SnailfishNumber(r, depth=self._depth+1, parent=self, position=1)
     
     def __str__(self):
         if self._type == 0:
             return str(self._value)
-        return f"[{self._left},{self._right}]"
+        return f"[{self._children[0]},{self._children[1]}]"
     
-    def magnitude(self):
+    def __add__(self, other):
+        result = SnailfishNumber([self._master, other._master])
+        result._reduce()
+        return result
+    
+    def _recompute_master(self):
         if self._type == 0:
             return self._value
-        return 3 * self._left.magnitude() + 2 * self._right.magnitude()
+        return [self._children[0]._recompute_master(), self._children[1]._recompute_master()]
+    
+    def _edge_add(self, n, position):
+        if self._children[position]._type == 0:
+            self._children[position]._value += n
+        else:
+            self._children[position]._edge_add(n, position)
+    
+    def _adj_add(self, n, target_position, caller_position):
+        if caller_position != target_position:
+            if self._children[target_position]._type == 0:
+                self._children[target_position]._value += n
+            else:
+                self._children[target_position]._edge_add(n, 1-target_position)
+        elif self._parent is not None:
+            self._parent._adj_add(n, target_position, self._pos)
     
     def _split(self):
-        if self._type == 1:
-            if self._left._split():
-                return True
-            if self._right._split():
-                return True
+        if self._type == 1 and (self._children[0]._split() or self._children[1]._split()):
+            return True
         
         if self._type == 0 and self._value >= 10:
             self._type = 1
-            l = self._value // 2
-            r = l + (self._value % 2)
             
-            self._left = SnailfishNumber(
-                str(l), 
-                depth = self._depth + 1, 
-                parent = self, 
-                position = 0
-                )
+            split_nums = [self._value // 2, self._value // 2 + self._value % 2]
             
-            self._right = SnailfishNumber(
-                str(r),
-                depth = self._depth + 1,
-                parent = self,
-                position = 1
-                )
+            for i in range(2):
+                self._children[i] = SnailfishNumber(split_nums[i], depth=self._depth+1, parent=self, position=i)
             
             return True
         
         return False
     
-    def _extreme_radd(self, n):
-        if self._right._type == 0:
-            self._right._value += n
-        else:
-            self._right._extreme_radd(n)
-    
-    def _extreme_ladd(self, n):
-        if self._left._type == 0:
-            self._left._value += n
-        else:
-            self._left._extreme_ladd(n)
-    
-    def _radd(self, n, caller_position, cascade=False):
-        if caller_position == 0:
-            if self._right._type == 0:
-                self._right._value += n
-            elif cascade:
-                self._right._extreme_ladd(n)
-            else:
-                self._right._ladd(n, 1, True)
-        elif self._parent is not None:
-            self._parent._radd(n, self._pos, True)
-    
-    def _ladd(self, n, caller_position, cascade=False):
-        if caller_position == 1:
-            if self._left._type == 0:
-                self._left._value += n
-            elif cascade:
-                self._left._extreme_radd(n)
-            else:
-                self._left._radd(n, 0, True)
-        elif self._parent is not None:
-            self._parent._ladd(n, self._pos, True)
-    
     def _explode(self):
-        if self._type == 1:
-            if self._left._explode():
-                return True
-            if self._right._explode():
-                return True
+        if self._type == 1 and (self._children[0]._explode() or self._children[1]._explode()):
+            return True
         
         if self._type == 1 \
-            and self._depth == 4 \
-            and self._left._type == 0 \
-            and self._right._type == 0:
-                self._parent._ladd(self._left._value, self._pos)
-                self._parent._radd(self._right._value, self._pos)
-                
+            and self._depth >= 4 \
+            and self._children[0]._type == 0 \
+            and self._children[1]._type == 0:
+                for i in range(2):
+                    self._parent._adj_add(self._children[i]._value, i, self._pos)
                 self._type = 0
                 self._value = 0
                 
@@ -137,24 +78,20 @@ class SnailfishNumber:
         
         return False
     
-    def reduce(self):
+    def _reduce(self):
         while self._explode() or self._split():
             pass
+        self._master = self._recompute_master()
     
-    def __add__(self, other):
-        result = SnailfishNumber(f"[{self},{other}]")
-        result.reduce()
-        return result
+    def magnitude(self):
+        if self._type == 0:
+            return self._value
+        return 3 * self._children[0].magnitude() + 2 * self._children[1].magnitude()
 
-def solve(numbers):
-    numbers = [SnailfishNumber(x) for x in numbers]
+def solve(data):
+    nums = [SnailfishNumber(eval(x)) for x in data]
     
-    ans_a = sum(numbers[1:], start=numbers[0]).magnitude()
-    
-    ans_b = 0
-    for x in numbers:
-        for y in numbers:
-            if x is not y:
-                ans_b = max(ans_b, (x+y).magnitude())
+    ans_a = sum(nums[1:], start=nums[0]).magnitude()
+    ans_b = max((x+y).magnitude() for x in nums for y in nums if x is not y)
     
     return ans_a, ans_b
