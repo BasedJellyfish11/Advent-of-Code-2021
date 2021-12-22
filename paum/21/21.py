@@ -1,11 +1,11 @@
 import numpy as np
+from functools import cache
+import time
 
 results = [(3, 1), (4, 3), (5, 6), (6, 7), (7, 6), (8, 3), (9, 1)]
 
-def simulate(score1, score2, pos1, pos2, num_universes, turn):
-
-    #print(f"{score1, score2, pos1, pos2, num_universes, turn}")
-
+@cache
+def simulate_cache(score1, score2, pos1, pos2, num_universes, turn):
     if score1 >= 21:
         return np.array([num_universes, 0])
     elif score2 >= 21:
@@ -28,14 +28,21 @@ def simulate(score1, score2, pos1, pos2, num_universes, turn):
     
     return ret
 
+def simulate(score1, score2, pos1, pos2, num_universes, turn):
+
+    return [num_universes * i for i in simulate_cache(score1, score2, pos1, pos2, 1, turn)]
+    #print(f"{score1, score2, pos1, pos2, num_universes, turn}")
+
 def main():
+
+    begin_time = time.perf_counter()
 
     with open("./input.txt") as f:
         pos = [int(line.split()[-1]) for line in f.readlines()]
 
     pos2 = [pos[0], pos[1]]
     score = [0, 0]
-    print(pos)
+    #print(pos)
 
     turn = 0
 
@@ -46,7 +53,7 @@ def main():
         total_roll = (i % 100) + ((i + 1) % 100) + ((i + 2) % 100)
         pos[turn] = (pos[turn] + total_roll) % 10
         score[turn] += 10 if pos[turn] == 0 else pos[turn]
-        print(score[turn])
+        #print(score[turn])
         if (score[turn] >= 1000):
             break
         turn = (turn + 1) % 2
@@ -57,6 +64,10 @@ def main():
 
     my_ret = simulate(0, 0, pos2[0], pos2[1], 1, 0)
     print(f"{max(my_ret[0], my_ret[1]):.20f}")
+
+    end_time = time.perf_counter()
+
+    print(f"Total time: {end_time - begin_time}")
 
 if __name__ == "__main__":
     main()

@@ -1,4 +1,5 @@
 import numpy as np
+import time
 
 class area:
     
@@ -79,16 +80,22 @@ def get_total_area(area_list):
 
 def main():
 
+    begin = time.perf_counter()
+
     instructions = get_instructions()
     area_list = [area((inst[0], inst[1] + 1), (inst[2], inst[3] + 1), (inst[4], inst[5] + 1), par) for par, inst in instructions]
     tot_a = get_total_area(area_list[0:20])
 
-    instructions = get_instructions()
+    instructionsb = get_instructions()
     area_list = [area((inst[0], inst[1] + 1), (inst[2], inst[3] + 1), (inst[4], inst[5] + 1), par) for par, inst in instructions]
     tot_b = get_total_area(area_list)
 
     print(f"Part A: {tot_a}")
     print(f"Part B: {tot_b}")
+
+    end = time.perf_counter()
+
+    print(f"Total time: {end - begin}")
     
 
 if __name__ == "__main__":
