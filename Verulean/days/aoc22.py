@@ -1,23 +1,28 @@
 class Cuboid:
-    def __init__(self, instruction):
-        instruction = instruction \
-            .replace('..', ' ') \
-            .replace(' x=', ' ') \
-            .replace(',y=', ' ') \
-            .replace(',z=', ' ') \
-            .split()
+    def __init__(self, state, *bounds):
+        self.state = state
+        self.bounds = tuple()
         
-        state, (xl, xh, yl, yh, zl, zh) = instruction[0], [int(x) for x in instruction[1:]]
-        
-        self.state = (state == 'on')
-        self.bounds = ((xl, xh + 1), (yl, yh + 1), (zl, zh + 1))
+        bounds = iter(bounds)
+        for low, high in zip(bounds, bounds):
+            self.bounds += ((low, high + 1),)
+    
+    @property
+    def ndim(self):
+        return len(self.bounds)
+    
+    def expand_dims(self, n):
+        deficit = n - self.ndim
+        if deficit > 0:
+            for _ in range(deficit):
+                self.bounds += ((0, 1),)
     
     def is_active(self, axis, position):
         return self.bounds[axis][0] <= position < self.bounds[axis][1]
     
     def in_init_procedure(self, a=-50, b=50):
         for l, h in self.bounds:
-            if not (a <= l <= b) or not (a <= h <= b):
+            if not (a <= l <= b) or not (a <= h - 1 <= b):
                 return False
         return True
 
@@ -45,8 +50,27 @@ def sweep(cuboids, axis):
     
     return area
 
+def volume(cuboids, ndim=None):
+    # Automatically detect maximum number of cuboid dimensions if not specified
+    if ndim is None:
+        ndim = max(c.ndim for c in cuboids)
+        for c in cuboids:
+            c.expand_dims(ndim)
+    
+    return sweep(cuboids, ndim - 1)
+
+def parse_instruction(instr):
+    instr = instr \
+        .replace('..', ' ') \
+        .replace(' x=', ' ') \
+        .replace(',y=', ' ') \
+        .replace(',z=', ' ') \
+        .split()
+    
+    instr[0] = (instr[0] == 'on')
+    return (int(x) for x in instr)
+
 def solve(data):
-    cuboids = [Cuboid(instr) for instr in data]
-    ans_a = sweep([c for c in cuboids if c.in_init_procedure()], 2)
-    ans_b = sweep(cuboids, 2)
-    return ans_a, ans_b
+    cuboids = [Cuboid(*parse_instruction(instr)) for instr in data]
+    init_cuboids = [c for c in cuboids if c.in_init_procedure()]
+    return volume(init_cuboids), volume(cuboids)
