@@ -3,9 +3,8 @@ class Cuboid:
         self.state = state
         self.bounds = tuple()
         
-        bounds = iter(bounds)
-        for low, high in zip(bounds, bounds):
-            self.bounds += ((low, high + 1),)
+        for bound in zip(*[iter(bounds)]*2):
+            self.bounds += (bound,)
     
     @property
     def ndim(self):
@@ -15,21 +14,22 @@ class Cuboid:
         deficit = n - self.ndim
         if deficit > 0:
             for _ in range(deficit):
-                self.bounds += ((0, 1),)
+                self.bounds += ((0, 0),)
     
     def is_active(self, axis, position):
-        return self.bounds[axis][0] <= position < self.bounds[axis][1]
+        return self.bounds[axis][0] <= position <= self.bounds[axis][1]
     
     def in_init_procedure(self, a=-50, b=50):
         for l, h in self.bounds:
-            if not (a <= l <= b) or not (a <= h - 1 <= b):
+            if not (a <= l <= b) or not (a <= h <= b):
                 return False
         return True
 
 def sweep(cuboids, axis):
     events = set()
     for c in cuboids:
-        events |= set(c.bounds[axis])
+        low, high = c.bounds[axis]
+        events |= {low, high + 1}
     N, events = len(events), sorted(events)
     
     area = 0
