@@ -1,9 +1,8 @@
-;; The first three lines of this file were inserted by DrRacket. They record metadata
-;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname d5) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor mixed-fraction #f #t none #f () #t)))
-;; Advent of Code Day 5
+#lang racket
 
-(require "d5input.rkt")
+;; Advent of Code Day 5
+(require htdp-trace)
+(define raw (file->list "d05input.txt"))
 
 ;; Part 1
 
@@ -51,7 +50,7 @@
 
 
 
-(define points (convert input))
+(define points (convert raw))
 
 
 ;; produces true if pair is a horiz line and false otherwise
@@ -66,11 +65,9 @@
      (third pair))) ; x1 = x2
 
 
-
 (define horiz-lines (filter (lambda (x)
                               (horiz-line? x))
                             points))
-
 
 
 (define vert-lines (filter (lambda (x)
@@ -78,25 +75,9 @@
                             points))
 
 
-
-;; produces all pairs of elements with one_i, two
-(define (cross one two)
-   (foldr (lambda (x rror) ; x from one
-            (append (foldr (lambda (y rror2) ; y from two
-                             (cons (list x y)
-                                   rror2))
-                           empty two)
-                    rror))
-          empty one))
-
-;; all possible points in a 1000x1000 grid from (0,0) to (1000,1000)
-(define coords (cross (build-list 1000 +) (build-list 1000 +)))
-
-
-
 ;; produces the points horizpair overlaps
 ;; Pair -> (listof Coord)
-(define (overlaps horizpair)
+(define (x-gen horizpair)
   (local
     [(define x1 (first horizpair))
      (define x2 (third horizpair))
@@ -118,4 +99,173 @@
        (list-points x2 n)])))
 
 
+;; produces the points vertpair overlaps
+(define (y-gen vertpair)
+  (local
+    [(define y1 (second vertpair))
+     (define y2 (fourth vertpair))
+     (define x (first vertpair))
+     
+     (define n (+ (abs (- y2 y1)) 1))
 
+     (define (list-points lower n)
+       (cond
+         [(= n 0)
+          empty]
+         [else
+          (cons (list x lower)
+                (list-points (add1 lower) (sub1 n)))]))]
+
+    (cond
+      [(< y1 y2)
+       (list-points y1 n)]
+      [else
+       (list-points y2 n)])))
+
+;; adds coord to dict, updates otherwise
+(define (dict-add coord dict)
+  (cond
+    [(empty? dict)
+     (list (list (first coord)
+                 (second coord)
+                 1))]
+    [(coord=? coord (first dict))
+     (cons (list (first coord)
+                 (second coord)
+                 (add1 (third (first dict))))
+           (rest dict))]
+    [else
+     (cons (first dict)
+           (dict-add coord (rest dict)))]))
+
+;; true if same coord, false otherwise
+(define (coord=? one two)
+  (and (= (first one) (first two))
+       (= (second one) (second two))))
+
+;; adds lst of elements to dict
+(define (dict-lst lst dict)
+  (cond
+    [(empty? lst)
+     dict]
+    [else
+     (dict-lst (rest lst) (dict-add (first lst) dict))]))
+
+
+(define (fast-add lst dict)
+  (cond
+    [(empty? lst)
+     dict]
+    [else
+     (fast-add (rest lst) (cons (first lst) dict))]))
+
+;; returns dict of all overlapped points
+(define (x-lines lines dict)
+  (cond
+    [(empty? lines)
+     dict]
+    [else
+     (x-lines (rest lines) (fast-add (x-gen (first lines)) dict))]))
+
+(define x (x-lines horiz-lines empty))
+
+(define (y-lines lines dict)
+  (cond
+    [(empty? lines)
+     dict]
+    [else
+     (y-lines (rest lines) (fast-add (y-gen (first lines)) dict))]))
+
+(define y (y-lines vert-lines x))
+
+;; produces how many elements in dict are duplicated
+(define (dedup dict checked appeared)
+  (cond
+    [(empty? dict)
+     (set-count checked)]
+    [(set-member? checked (first dict))
+     (dedup (rest dict)
+            checked
+            appeared)]
+    [(set-member? appeared (first dict))
+     (dedup (rest dict)
+            (set-add checked (first dict))
+            appeared)]
+    [else
+     (dedup (rest dict)
+            checked
+            (set-add appeared (first dict)))]))
+
+
+;; Answer: 6283
+(define p1ans (dedup y (set) (set)))
+
+
+
+;; Part 2:
+
+(define diag-lines (filter (lambda (x)
+                             (and (not (horiz-line? x))
+                                  (not (vert-line? x))))
+                           points))
+
+
+;; produces the points pair overlaps
+(define (diag-gen pair)
+  (local
+    [(define x1 (first pair))
+
+     (define y1 (second pair))
+
+     (define x2 (third pair))
+
+     (define y2 (fourth pair))
+
+     (define n (+ (abs (- y2 y1)) 1))
+
+     (define m (/ (- y2 y1) (- x2 x1)))
+
+     (define (list-points x y n)
+       (cond
+         [(= n 0)
+          empty]
+         [else
+          (cons (list x y)
+                (list-points (add1 x) (add1 y) (sub1 n)))]))
+
+     (define (neg-lp x y n)
+       (cond
+         [(= n 0)
+          empty]
+         [else
+          (cons (list x y)
+                (neg-lp (add1 x) (sub1 y) (sub1 n)))]))]
+
+    (cond
+      [(> m 0) ; positive slope
+       (cond
+         [(< x1 x2)
+          (list-points x1 y1 n)]
+         [else
+          (list-points x2 y2 n)])]
+      [else
+       (cond
+         [(< x1 x2)
+          (neg-lp x1 y1 n)]
+         [else
+          (neg-lp x2 y2 n)])])))
+
+
+;; adds all diag overlaps
+(define (diags lines dict)
+  (cond
+    [(empty? lines)
+     dict]
+    [else
+     (diags (rest lines) (fast-add (diag-gen (first lines)) dict))]))
+
+(define all (diags diag-lines y))
+
+
+;; Answer: 18864
+(define p2ans (dedup all (set) (set)))
