@@ -2,7 +2,9 @@ from collections import deque
 from itertools import product
 
 
-fmt_dict = {'sep': 'inp w\n'}
+fmt_dict = {
+    'sep': 'inp'
+    }
 
 def rirange(a, b, rev):
     """Reversible inclusive range."""
@@ -18,9 +20,9 @@ class MONAD:
     
     @staticmethod
     def parse_block(block):
-        grow = (block[3][-1] == '1')
-        offset_1 = int(block[4][-1])
-        offset_2 = int(block[14][-1])
+        grow = (block[4][-1] == '1')
+        offset_1 = int(block[5][-1])
+        offset_2 = int(block[15][-1])
         return grow, offset_1, offset_2
     
     def _digit_relations(self):
