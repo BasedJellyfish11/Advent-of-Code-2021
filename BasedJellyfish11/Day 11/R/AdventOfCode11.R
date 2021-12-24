@@ -43,7 +43,7 @@ step <- function(input_padded) {
 flash_count <- 0
 for (i in 1:100) {
   input_padded <- step(input_padded)
-  flash_count <-flash_count + sum(!is.na(input_padded[input_padded == 0]))
+  flash_count <- flash_count + sum(!is.na(input_padded[input_padded == 0]))
 }
 
 current_step <- 100
