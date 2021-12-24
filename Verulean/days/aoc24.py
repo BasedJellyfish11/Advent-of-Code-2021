@@ -1,87 +1,91 @@
-def z_value(w):
-    # w = [int(x) for x in str(inputs)]
-    
-    if 0 in w:
-        return 1
-    
-    z = w[0] + 6
-    
-    z = 26 * z + w[1] + 2
-    
-    z = 26 * z + w[2] + 13
-    
-    z, x = divmod(z, 26)
-    if w[3] != (x - 6):
-        z = 26 * z + w[3] + 8
-    
-    z = 26 * z + w[4] + 13
-    
-    z, x = divmod(z, 26)
-    if w[5] != (x - 12):
-        z = 26 * z + w[5] + 8
-    
-    z = 26 * z + w[6] + 3
-    
-    z = 26 * z + w[7] + 11
-    
-    z = 26 * z + w[8] + 10
-    
-    z, x = divmod(z, 26)
-    if w[9] != (x - 2):
-        z = 26 * z + w[9] + 8
-    
-    z, x = divmod(z, 26)
-    if w[10] != (x - 5):
-        z = 26 * z + w[10] + 14
-    
-    z, x = divmod(z, 26)
-    if w[11] != (x - 4):
-        z = 26 * z + w[11] + 6
-    
-    z, x = divmod(z, 26)
-    if w[12] != (x - 4):
-        z = 26 * z + w[12] + 8
-    
-    z, x = divmod(z, 26)
-    if w[13] != (x - 12):
-        z = 26 * z + w[13] + 2
-    
-    return z
+from collections import deque
+from itertools import product
+
+
+fmt_dict = {'sep': 'inp w\n'}
 
 def rirange(a, b, rev):
+    """Reversible inclusive range."""
     if rev:
-        return range(b, a-1, -1)
-    return range(a, b+1)
+        return range(b, a - 1, -1)
+    return range(a, b + 1)
 
-def gen_cand(rev=True):
-    ad1 = rirange(7, 9, rev)
-    ad2 = rirange(3, 9, rev)
-    ad3 = rirange(1, 2, rev)
-    ad5 = rirange(1, 8, rev)
-    ad7 = rirange(2, 9, rev)
-    ad8 = rirange(1, 3, rev)
+class MONAD:    
+    def __init__(self, blocks):
+        self._blocks = tuple(type(self).parse_block(block) for block in blocks)
+        self._relations = self._digit_relations()
+        self._N = len(self._blocks)
     
-    ad9 = rirange(1, 9, rev)
-    ad10 = rirange(1, 9, rev)
+    @staticmethod
+    def parse_block(block):
+        grow = (block[3][-1] == '1')
+        offset_1 = int(block[4][-1])
+        offset_2 = int(block[14][-1])
+        return grow, offset_1, offset_2
     
-    for d1 in ad1:
-        for d2 in ad2:
-            for d3 in ad3:
-                for d5 in ad5:
-                    for d7 in ad7:
-                        for d8 in ad8:
-                            for d9 in ad9:
-                                for d10 in ad10:
-                                    yield [d1, d2, d3, d3+7, d5, d5+1, d7, d8, d9, d10, d8+6, d7-1, d2-2, d1-6]
+    def _digit_relations(self):
+        r = {}
+        q = deque()
+        for digit, (grow, o1, o2) in enumerate(self._blocks):
+            if grow:
+                q.append((digit, o2))
+            else:
+                check_digit, check_offset = q.pop()
+                r[digit] = (check_digit, check_offset + o1)
+        return r
+    
+    def _candidates(self, rev=True):
+        fixed = self._digit_relations()
+        free = {}
+        
+        # Bound possible values of free digits
+        for digit, offset in fixed.values():
+            if offset > 0:
+                bounds = (1, 9 - offset)
+            else:
+                bounds = (1 - offset, 9)
+            free[digit] = rirange(*bounds, rev)
+        
+        # Add in any unrepresented digits as free variables
+        for digit in range(self._N):
+            if (digit not in fixed) and (digit not in free):
+                free[digit] = rirange(1, 9, rev)
+        
+        for free_digits in product(*free.values()):
+            n = {}
+            for i, value in zip(free, free_digits):
+                n[i] = value
+            for i, (source, offset) in fixed.items():
+                n[i] = n[source] + offset
+            yield [n[i] for i in range(self._N)]
+    
+    def _run_block(self, block_index, z, w):
+        g, o1, o2 = self._blocks[block_index]
+        x = (z % 26 + o1) != w
+        if not g:
+            z //= 26
+        if x:
+            z = 26 * z + w + o2
+        return z
+    
+    def _run(self, number: list):
+        z = 0
+        for i, w in enumerate(number):
+            z = self._run_block(i, z, w)
+        return z
+    
+    def _first_valid(self, rev=True):
+        for n in self._candidates(rev=rev):
+            if self._run(n) == 0:
+                break
+        result = 0
+        for power, digit in enumerate(reversed(n)):
+            result += digit * 10 ** power
+        return result
+    
+    def solve(self):
+        return self._first_valid(), self._first_valid(rev=False)
 
-def lint_to_int(l: list):
-    return int(''.join(str(d) for d in l))
-
-def solve(_):
-    for n in gen_cand():
-        if z_value(n) == 0:
-            break
-    for m in gen_cand(False):
-        if z_value(m) == 0:
-            break
-    return lint_to_int(n), lint_to_int(m)
+def solve(data):
+    blocks = [[instr.split() for instr in block.split('\n')] for block in data if block]
+    return MONAD(blocks).solve()
