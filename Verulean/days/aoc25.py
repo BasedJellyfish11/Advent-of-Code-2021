@@ -1,33 +1,23 @@
 import numpy as np
 
 
-def step(cucs):
-    moved = False
-    can_move_east = np.roll(cucs[0], 1, axis=1) & (~ cucs[1]) & (~cucs[0])
-    if np.any(can_move_east):
-        moved = True
-        cucs[0] |= can_move_east
-        cucs[0] ^= np.roll(can_move_east, -1, axis=1)
+def step(east_herd, south_herd):
+    move_east = np.roll(east_herd, 1, axis=1) & ~(east_herd | south_herd)
+    east_herd ^= (move_east | np.roll(move_east, -1, axis=1))
     
-    can_move_south = np.roll(cucs[1], 1, axis=0) & (~ cucs[0]) & (~cucs[1])
-    if np.any(can_move_south):
-        moved = True
-        cucs[1] |= can_move_south
-        cucs[1] ^= np.roll(can_move_south, -1, axis=0)
+    move_south = np.roll(south_herd, 1, axis=0) & ~(east_herd | south_herd)
+    south_herd ^= (move_south | np.roll(move_south, -1, axis=0))
     
-    return moved
-
+    return np.any(move_east | move_south)
 
 def solve(data):
-    data = np.array([list(line) for line in data])
-    m, n = data.shape
-    cucs = np.zeros((2, m, n), dtype=bool)
-    # 0 -> East, 1 -> South
-    cucs[0] = np.where(data == '>', True, False)
-    cucs[1] = np.where(data == 'v', True, False)
+    data = np.array([list(row) for row in data])
     
-    s = 1
-    while step(cucs):
-        s+= 1
+    east_herd = (data == '>')
+    south_herd = (data == 'v')
     
-    return s
+    step_count = 1
+    while step(east_herd, south_herd):
+        step_count += 1
+    
+    return step_count
