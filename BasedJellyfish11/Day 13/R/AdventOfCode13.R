@@ -26,28 +26,29 @@ fold_vertical <- function(input_matrix, along){
 
 input <- read.csv(text = paste0(head(readLines("../input"),-12), collapse = "\n"), header = F)
 input <- input + 1
-grid <- matrix(data = TRUE, nrow = max(input$V1), ncol = max(input$V2))
+grid <- matrix(data = TRUE, nrow = max(input$V2), ncol = max(input$V1))
 
 
 for (i in 1:nrow(input)) {
-  grid[input[i, 1], input[i, 2]] <- FALSE
+  grid[input[i, 2], input[i, 1]] <- FALSE # Remember that y is actually the row, because it's how deep it is
 }
-# I am inputting my folds manually because parsing them is hell in R (unless you use a lib ofc) and I cannot be bothered
 
-yeah <- fold_horizontal(grid,655)
+# I am inputting my folds manually because parsing them is hell in R (unless you use a lib ofc) and I cannot be bothered
+# As explained by Suf, remember that folding by x is actually folding vertically, and that y is folding horizontally
+
+yeah <- fold_vertical(grid,655)
 format(length(yeah) - sum(yeah))
-yeah <- fold_vertical(yeah, 447)
-yeah <- fold_horizontal(yeah,327)
-yeah <- fold_vertical(yeah, 223)
-yeah <- fold_horizontal(yeah,163)
-yeah <- fold_vertical(yeah, 111)
-yeah <- fold_horizontal(yeah,81)
-yeah <- fold_vertical(yeah, 55)
-yeah <- fold_horizontal(yeah,40)
-yeah <- fold_vertical(yeah, 27)
-yeah <- fold_vertical(yeah, 13)
-yeah <- fold_vertical(yeah, 6)
+yeah <- fold_horizontal(yeah, 447)
+yeah <- fold_vertical(yeah,327)
+yeah <- fold_horizontal(yeah, 223)
+yeah <- fold_vertical(yeah,163)
+yeah <- fold_horizontal(yeah, 111)
+yeah <- fold_vertical(yeah,81)
+yeah <- fold_horizontal(yeah, 55)
+yeah <- fold_vertical(yeah,40)
+yeah <- fold_horizontal(yeah, 27)
+yeah <- fold_horizontal(yeah, 13)
+yeah <- fold_horizontal(yeah, 6)
 yeah[yeah == FALSE] <- '#'
 yeah[yeah == TRUE] <- '.'
-ee <- t(yeah)
-View(ee)
+View(yeah)
