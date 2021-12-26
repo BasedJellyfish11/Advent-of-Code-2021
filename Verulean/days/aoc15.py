@@ -8,11 +8,8 @@ class PriorityQueue(list):
     def push(self, value):
         return heapq.heappush(self, value)
 
-def neighbors(i, j, m, n):
-    candidates = ((i-1, j), (i+1, j), (i, j-1), (i, j+1))
-    for ii, jj in candidates:
-        if 0 <= ii < m and 0 <= jj < n:
-            yield ii, jj
+def neighbors(i, j):
+    return ((i-1, j), (i+1, j), (i, j-1), (i, j+1))
 
 def numpy_dijkstra(costs):
     m, n = costs.shape
@@ -27,11 +24,13 @@ def numpy_dijkstra(costs):
     g[start] = 0
     
     while q:
-        cost, (i, j) = q.pop()
-        if (i, j) == end:
+        cost, node = q.pop()
+        if node == end:
             return int(g[end])
         
-        for adj in neighbors(i, j, m, n):
+        for adj in neighbors(*node):
+            if not (0 <= adj[0] < m and 0 <= adj[1] < n):
+                continue
             adj_cost = cost + costs[adj]
             if adj_cost < g[adj]:
                 g[adj] = adj_cost
@@ -43,9 +42,7 @@ def expand_block(block, M, N):
     shift = np.add.outer(np.arange(M), np.arange(N))
     shift = np.repeat(np.repeat(shift, m, axis=0), n, axis=1)
     
-    new_block = ((np.tile(block, (M, N)) + shift - 1) % 9) + 1
-    
-    return new_block
+    return ((np.tile(block, (M, N)) + shift - 1) % 9) + 1
 
 def solve(data):
     costs_a = np.array([list(row) for row in data], dtype=float)
