@@ -1,5 +1,12 @@
 import numpy as np
+import heapq
 
+
+class PriorityQueue(list):
+    def pop(self):
+        return heapq.heappop(self)
+    def push(self, value):
+        return heapq.heappush(self, value)
 
 def neighbors(i, j, m, n):
     candidates = ((i-1, j), (i+1, j), (i, j-1), (i, j+1))
@@ -7,39 +14,33 @@ def neighbors(i, j, m, n):
         if 0 <= ii < m and 0 <= jj < n:
             yield ii, jj
 
-# The classic O((mn)^2) time complexity
 def numpy_dijkstra(costs):
     m, n = costs.shape
     
-    visited = np.zeros_like(costs, dtype=bool)
-    distance = np.full_like(costs, np.inf)
-    distance[0, 0] = 0
+    start = (0, 0)
+    end = (m - 1, n - 1)
     
-    i, j = 0, 0
-    while not visited[-1, -1]:
-        visited[i, j] = True
+    q = PriorityQueue()
+    q.push((0, start))
+    
+    g = np.full_like(costs, np.inf)
+    g.__setitem__(start, 0)
+    
+    while q:
+        cost, (i, j) = q.pop()
+        if (i, j) == end:
+            return int(g.__getitem__(end))
+        
         for ii, jj in neighbors(i, j, m, n):
-            distance[ii, jj] = min(
-                distance[ii, jj], 
-                distance[i, j] + costs[ii, jj]
-                )
-        i, j = np.unravel_index(
-            np.argmin(
-                np.where(
-                    ~visited, 
-                    distance, 
-                    np.inf
-                    )
-                ), 
-            distance.shape
-            )
-    
-    return int(distance[-1, -1])
+            adj_cost = cost + costs[ii, jj]
+            if adj_cost < g[ii, jj]:
+                g[(ii, jj)] = adj_cost
+                q.push((adj_cost, (ii, jj)))
 
 def expand_block(block, M, N):
     m, n = block.shape
     
-    shift = np.add.outer(np.arange(M), np.arange(N), dtype=float)
+    shift = np.add.outer(np.arange(M), np.arange(N))
     shift = np.repeat(np.repeat(shift, m, axis=0), n, axis=1)
     
     new_block = ((np.tile(block, (M, N)) + shift - 1) % 9) + 1
