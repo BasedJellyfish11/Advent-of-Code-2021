@@ -24,18 +24,18 @@ def numpy_dijkstra(costs):
     q.push((0, start))
     
     g = np.full_like(costs, np.inf)
-    g.__setitem__(start, 0)
+    g[start] = 0
     
     while q:
         cost, (i, j) = q.pop()
         if (i, j) == end:
-            return int(g.__getitem__(end))
+            return int(g[end])
         
-        for ii, jj in neighbors(i, j, m, n):
-            adj_cost = cost + costs[ii, jj]
-            if adj_cost < g[ii, jj]:
-                g[(ii, jj)] = adj_cost
-                q.push((adj_cost, (ii, jj)))
+        for adj in neighbors(i, j, m, n):
+            adj_cost = cost + costs[adj]
+            if adj_cost < g[adj]:
+                g[adj] = adj_cost
+                q.push((adj_cost, adj))
 
 def expand_block(block, M, N):
     m, n = block.shape
