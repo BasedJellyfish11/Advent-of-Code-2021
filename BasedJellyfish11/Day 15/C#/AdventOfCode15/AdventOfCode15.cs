@@ -113,7 +113,7 @@ namespace AdventOfCode15
             }
         }
 
-        private class AStarNode
+        private readonly struct AStarNode
         {
             public readonly Node node;
             private readonly Node endNode;
